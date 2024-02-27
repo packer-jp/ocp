@@ -697,7 +697,7 @@ def radius_graph_pbc(
     atom_distance_sqr = torch.sum((pos1 - pos2) ** 2, dim=1)
     atom_distance_sqr = atom_distance_sqr.view(-1)
 
-    normalization_factor = normalization_factor[data.batch[index1]]
+    normalization_factor = torch.index_select(normalization_factor, 0, torch.index_select(data.batch, 0, index1))
 
     # Remove pairs that are too far apart
     mask_within_radius = torch.le(atom_distance_sqr, (normalization_factor * radius) ** 2)
