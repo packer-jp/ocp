@@ -634,7 +634,11 @@ def radius_graph_pbc(
 
     cross_a2a3 = torch.cross(data.cell[:, 1], data.cell[:, 2], dim=-1)
     cell_vol = torch.sum(data.cell[:, 0] * cross_a2a3, dim=-1, keepdim=True)
-    normalization_factor = (torch.abs(cell_vol) / data.natoms.view(-1, 1)) ** (1 / 3) if normalization_by_density else 1
+    normalization_factor = (
+        (torch.abs(cell_vol) / data.natoms.view(-1, 1)) ** (1 / 3)
+        if normalization_by_density
+        else 1
+    )
 
     if pbc[0]:
         inv_min_dist_a1 = torch.norm(cross_a2a3 / cell_vol, p=2, dim=-1)
@@ -697,7 +701,13 @@ def radius_graph_pbc(
     atom_distance_sqr = torch.sum((pos1 - pos2) ** 2, dim=1)
     atom_distance_sqr = atom_distance_sqr.view(-1)
 
-    normalization_factor = torch.index_select(normalization_factor, 0, torch.index_select(data.batch, 0, index1)).view(-1) if normalization_by_density else 1
+    normalization_factor = (
+        torch.index_select(
+            normalization_factor, 0, torch.index_select(data.batch, 0, index1)
+        ).view(-1)
+        if normalization_by_density
+        else 1
+    )
 
     # Remove pairs that are too far apart
     mask_within_radius = torch.le(atom_distance_sqr, (normalization_factor * radius) ** 2)
