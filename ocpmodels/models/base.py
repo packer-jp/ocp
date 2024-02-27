@@ -77,7 +77,7 @@ class BaseModel(nn.Module):
                     cutoff,
                     max_neighbors,
                     enforce_max_neighbors_strictly,
-                    normalization_by_density=self.normalization_by_density,
+                    normalization_by_density=normalization_by_density,
                 )
 
             out = get_pbc_distances(

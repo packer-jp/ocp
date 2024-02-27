@@ -81,8 +81,6 @@ class GemNetT(BaseModel):
 
         cutoff: float
             Embedding cutoff for interactomic directions in Angstrom.
-        normalization_by_density: bool
-            Whether to normalize the cutoff by the density.
         rbf: dict
             Name and hyperparameters of the radial basis function.
         envelope: dict
@@ -120,7 +118,6 @@ class GemNetT(BaseModel):
         regress_forces: bool = True,
         direct_forces: bool = False,
         cutoff: float = 6.0,
-        normalization_by_density: bool = False,
         max_neighbors: int = 50,
         rbf: dict = {"name": "gaussian"},
         envelope: dict = {"name": "polynomial", "exponent": 5},
@@ -141,8 +138,6 @@ class GemNetT(BaseModel):
 
         self.cutoff = cutoff
         assert self.cutoff <= 6 or otf_graph
-
-        self.normalization_by_density = normalization_by_density
 
         self.max_neighbors = max_neighbors
         assert self.max_neighbors == 50 or otf_graph
@@ -438,7 +433,7 @@ class GemNetT(BaseModel):
             cell_offsets,
             _,  # cell offset distances
             neighbors,
-        ) = self.generate_graph(data, normalization_by_density=self.normalization_by_density)
+        ) = self.generate_graph(data)
         # These vectors actually point in the opposite direction.
         # But we want to use col as idx_t for efficient aggregation.
         V_st = -distance_vec / D_st[:, None]
