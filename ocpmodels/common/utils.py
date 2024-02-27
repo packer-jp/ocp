@@ -559,6 +559,7 @@ def radius_graph_pbc(
     max_num_neighbors_threshold,
     enforce_max_neighbors_strictly: bool = False,
     pbc=[True, True, True],
+    normalization_by_density=False,
 ):
     device = data.pos.device
     batch_size = len(data.natoms)
@@ -633,24 +634,25 @@ def radius_graph_pbc(
 
     cross_a2a3 = torch.cross(data.cell[:, 1], data.cell[:, 2], dim=-1)
     cell_vol = torch.sum(data.cell[:, 0] * cross_a2a3, dim=-1, keepdim=True)
+    normalization_factor = (torch.abs(cell_vol) / data.natoms) ** (1 / 3) if normalization_by_density else 1
 
     if pbc[0]:
         inv_min_dist_a1 = torch.norm(cross_a2a3 / cell_vol, p=2, dim=-1)
-        rep_a1 = torch.ceil(radius * inv_min_dist_a1)
+        rep_a1 = torch.ceil(normalization_factor * radius * inv_min_dist_a1)
     else:
         rep_a1 = data.cell.new_zeros(1)
 
     if pbc[1]:
         cross_a3a1 = torch.cross(data.cell[:, 2], data.cell[:, 0], dim=-1)
         inv_min_dist_a2 = torch.norm(cross_a3a1 / cell_vol, p=2, dim=-1)
-        rep_a2 = torch.ceil(radius * inv_min_dist_a2)
+        rep_a2 = torch.ceil(normalization_factor * radius * inv_min_dist_a2)
     else:
         rep_a2 = data.cell.new_zeros(1)
 
     if pbc[2]:
         cross_a1a2 = torch.cross(data.cell[:, 0], data.cell[:, 1], dim=-1)
         inv_min_dist_a3 = torch.norm(cross_a1a2 / cell_vol, p=2, dim=-1)
-        rep_a3 = torch.ceil(radius * inv_min_dist_a3)
+        rep_a3 = torch.ceil(normalization_factor * radius * inv_min_dist_a3)
     else:
         rep_a3 = data.cell.new_zeros(1)
 
@@ -695,8 +697,10 @@ def radius_graph_pbc(
     atom_distance_sqr = torch.sum((pos1 - pos2) ** 2, dim=1)
     atom_distance_sqr = atom_distance_sqr.view(-1)
 
+    normalization_factor = normalization_factor[data.batch[index1]]
+
     # Remove pairs that are too far apart
-    mask_within_radius = torch.le(atom_distance_sqr, radius * radius)
+    mask_within_radius = torch.le(atom_distance_sqr, (normalization_factor * radius) ** 2)
     # Remove pairs with the same atoms (distance = 0.0)
     mask_not_same = torch.gt(atom_distance_sqr, 0.0001)
     mask = torch.logical_and(mask_within_radius, mask_not_same)

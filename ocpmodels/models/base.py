@@ -34,6 +34,7 @@ class BaseModel(nn.Module):
         self,
         data,
         cutoff=None,
+        normalization_by_density=False,
         max_neighbors=None,
         use_pbc=None,
         otf_graph=None,
@@ -76,6 +77,7 @@ class BaseModel(nn.Module):
                     cutoff,
                     max_neighbors,
                     enforce_max_neighbors_strictly,
+                    normalization_by_density=self.normalization_by_density,
                 )
 
             out = get_pbc_distances(
