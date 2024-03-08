@@ -635,7 +635,7 @@ def radius_graph_pbc(
     cross_a2a3 = torch.cross(data.cell[:, 1], data.cell[:, 2], dim=-1)
     cell_vol = torch.sum(data.cell[:, 0] * cross_a2a3, dim=-1, keepdim=True)
     normalization_factor = (
-        (torch.abs(cell_vol) / data.natoms.view(-1, 1)) ** (1 / 3)
+        (torch.abs(cell_vol.view(-1)) / data.natoms) ** (1 / 3)
         if normalization_by_density
         else 1
     )
